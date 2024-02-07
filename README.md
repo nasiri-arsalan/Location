@@ -1,4 +1,4 @@
-# Sample Location
+# Location
 
 
 
@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.com/arsalan5544106/sample-location.git
+git remote add origin https://gitlab.com/arsalan5544106/Location.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.com/arsalan5544106/sample-location/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab.com/arsalan5544106/Location/-/settings/integrations)
 
 ## Collaborate with your team
 
