@@ -1,37 +1,65 @@
 package com.arsalan.location.ui.main.viewModel
 
+import android.annotation.SuppressLint
+import android.app.Application
+import android.content.BroadcastReceiver
 import android.content.Context
-import android.util.Log
-import androidx.lifecycle.ViewModel
+import android.content.Intent
+import android.content.IntentFilter
+import android.location.Location
+import android.os.Build
+import androidx.lifecycle.AndroidViewModel
 import com.arsalan.location.model.LocationModel
-import com.arsalan.location.utils.FindLocation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Date
+import com.arsalan.location.utils.Extension.getDateAndTime
 
-class MainViewModel : ViewModel() {
+
+@SuppressLint("UnspecifiedRegisterReceiverFlag")
+class MainViewModel(private val application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<List<LocationModel>>(listOf())
     val uiState: StateFlow<List<LocationModel>> = _uiState.asStateFlow()
 
-
-    // TODO: Delete after add service
-    fun fakeData(context: Context) {
-        val findLocation = FindLocation()
-        findLocation.requestLocationUpdates(context) {
-            val myMutableList = mutableListOf<LocationModel>()
-            myMutableList.add(
-                LocationModel(
-                    lat = it.latitude,
-                    lng = it.longitude,
-                    dateAndTime = Date().toString()
+    private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val data: Location? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra("data", Location::class.java)
+            } else {
+                intent.getParcelableExtra("data")
+            }
+            data?.let {
+                val myMutableList = mutableListOf<LocationModel>()
+                myMutableList.add(
+                    LocationModel(
+                        lat = it.latitude,
+                        lng = it.longitude,
+                        dateAndTime = Date().getDateAndTime()
+                    )
                 )
-            )
-            _uiState.value += myMutableList
-            Log.d(
-                "ArslanTest",
-                "${_uiState.value.size}  ${myMutableList.size}   ${if (_uiState.value.isNotEmpty()) _uiState.value.last().dateAndTime else ""}"
-            )
+                _uiState.value += myMutableList
+            }
         }
     }
+
+    init {
+        registerReceiver()
+    }
+
+    private fun registerReceiver() {
+        val filter = IntentFilter("service.data.broadcast")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            application.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            application.registerReceiver(receiver, filter)
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        application.unregisterReceiver(receiver)
+    }
+
+
 }

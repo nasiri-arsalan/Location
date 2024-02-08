@@ -13,8 +13,10 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 
-class FindLocation {
-    private fun createFusedLocationProviderClient(context: Context): FusedLocationProviderClient {
+class FindLocation(private val context: Context) {
+    private var locationCallback: LocationCallback? = null
+    private val client = createFusedLocationProviderClient()
+    private fun createFusedLocationProviderClient(): FusedLocationProviderClient {
         return LocationServices.getFusedLocationProviderClient(context)
     }
 
@@ -25,7 +27,7 @@ class FindLocation {
         return LocationRequest.Builder(priority, interval).build()
     }
 
-    fun requestLocationUpdates(context: Context, onLocationCallback: (Location) -> Unit) {
+    fun requestLocationUpdates(onLocationCallback: (Location) -> Unit) {
 
         if (ActivityCompat.checkSelfPermission(
                 context,
@@ -38,17 +40,24 @@ class FindLocation {
             return
         }
 
-        val client = createFusedLocationProviderClient(context = context)
 
         val locationRequest = createLocationRequest()
 
-        val locationCallback = object : LocationCallback() {
+        locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 onLocationCallback(locationResult.locations.last())
             }
         }
-        client.requestLocationUpdates(
-            locationRequest, locationCallback, Looper.getMainLooper()
-        )
+        locationCallback?.let {
+            client.requestLocationUpdates(
+                locationRequest, it, Looper.getMainLooper()
+            )
+        }
+    }
+
+    fun stopRequestLocationUpdates() {
+        locationCallback?.let {
+            client.removeLocationUpdates(it)
+        }
     }
 }
